@@ -103,7 +103,7 @@ public class Fb2Builder : BuilderBase {
 
         await using var inputFile = tempFile.GetStream();
         await writer.WriteStartElementAsync(null, "binary", null);
-        await writer.WriteAttributeStringAsync(null, "id", null, tempFile.FullName);
+        await writer.WriteAttributeStringAsync(null, "id", null, "i" + tempFile.FullName);
         await writer.WriteAttributeStringAsync(null, "content-type", null, "image/" + tempFile.Extension.TrimStart('.'));
         using var br = new BinaryReader(inputFile);
 
@@ -162,7 +162,7 @@ public class Fb2Builder : BuilderBase {
             var coverPage = CreateXElement("coverpage");
             
             var imageElem = CreateXElement("image");
-            imageElem.SetAttributeValue(_xlink + "href", "#" + cover.FullName);
+            imageElem.SetAttributeValue(_xlink + "href", "#i" + cover.FullName);
             
             coverPage.Add(imageElem);
             _titleInfo.Add(coverPage);
@@ -294,7 +294,7 @@ public class Fb2Builder : BuilderBase {
             }
             
             var imageElem = CreateXElement("image");
-            imageElem.SetAttributeValue(_xlink + "href", "#" + node.Attributes["src"].Value);
+            imageElem.SetAttributeValue(_xlink + "href", "#i" + node.Attributes["src"].Value);
             parent.Add(imageElem);
 
             return;
@@ -345,9 +345,13 @@ public class Fb2Builder : BuilderBase {
     protected override async Task BuildInternal(Book book, string fileName) {
         await using var file = File.Create(fileName);
         
+        var genre = CreateXElement("genre");
+        genre.Value = "sf";
+        _titleInfo.Add(genre); 
+
         AddAuthor(book.Author);
         AddCoAuthors(book.CoAuthors);
-        WithBookUrl(book.Url);
+
         WithTitle(book.Title);
         WithAnnotation(book.Annotation);
         WithCover(book.Cover);
@@ -355,12 +359,24 @@ public class Fb2Builder : BuilderBase {
         WithSeria(book.Seria);
         WithChapters(book.Chapters);
         
-        _documentInfo.Add(GetDateElement(DateTime.Today));
+
         
         var programUsed = CreateXElement("program-used");
         programUsed.Value = "Elib2Ebook";
         _documentInfo.Add(programUsed);
         
+        _documentInfo.Add(GetDateElement(DateTime.Today));
+
+        WithBookUrl(book.Url);
+
+        var id = CreateXElement("id");
+        id.Value = Guid.NewGuid().ToString();
+        _documentInfo.Add(id);
+
+        var version = CreateXElement("version");
+        version.Value = "1.0";
+        _documentInfo.Add(version);
+
         _description.Add(_titleInfo);
         _description.Add(_documentInfo);
         
