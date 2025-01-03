@@ -26,10 +26,11 @@ internal static class Program {
         
         await parserResult
             .WithNotParsed(errs => {
-                var title = Assembly.GetEntryAssembly().GetName();
-                var version = FileVersionInfo.GetVersionInfo("Core.dll").ProductVersion.Split("+")[0];
-                
-                var heading = new HeadingInfo(title.Name, version);
+                var title = AppDomain.CurrentDomain.FriendlyName;
+                var coreAssembly = typeof(BookGetterConfig).Assembly;                
+                var version = coreAssembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version ?? string.Empty;
+
+                var heading = new HeadingInfo(title, version);
 
                 if (errs.IsVersion()) {
                     logger.LogInformation(heading);
